@@ -9,7 +9,11 @@ public class SelectController : MonoBehaviour
     private UISquareFrame selectFrame;
     [SerializeField]
     private List<GameObject> selectIcons;
-    
+
+    // ステージ初期情報
+    [SerializeField]
+    private List<StagePropertyAsset> stagePropertyAssets = new List<StagePropertyAsset>();
+        
     /// <summary>
     /// フォーカスしたいアイコンにフレームを合わせる
     /// </summary>
@@ -32,5 +36,20 @@ public class SelectController : MonoBehaviour
         {
             obj.SetActive(enable);
         }
+    }
+
+    public Vector3 getpos()
+    {
+        return selectIcons[0].transform.position;
+    }
+
+    /// <summary>
+    /// ステージ情報取得
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public StagePropertyAsset GetStageProperty(int index)
+    {
+        return stagePropertyAssets[index];
     }
 }

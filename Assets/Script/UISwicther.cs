@@ -6,11 +6,11 @@ using System.Linq;
 
 public class UISwicther : MonoBehaviour
 {
-    public enum UI_NUMBER
+    public enum UI_INDEX
     {
         TITLE,
-        INAGAME,
-        OUTGAME
+        SELECT,
+        MAIN
     }
 
 
@@ -18,12 +18,12 @@ public class UISwicther : MonoBehaviour
     [SerializeField]
     private List<GameObject> mainUIs = new List<GameObject>();    
 
-    private Dictionary<UI_NUMBER, GameObject> uiPairs = new Dictionary<UI_NUMBER, GameObject>();
+    private Dictionary<UI_INDEX, GameObject> uiPairs = new Dictionary<UI_INDEX, GameObject>();
 
     // Start is called before the first frame update
     void Start()
     {
-        var enumNames = Enum.GetNames(typeof(UI_NUMBER));
+        var enumNames = Enum.GetNames(typeof(UI_INDEX));
 
         if(enumNames.Length <= mainUIs.Count)
         {
@@ -37,9 +37,9 @@ public class UISwicther : MonoBehaviour
     private void SetUIinDic()
     {
         int index = 0;
-        foreach (var number in Enum.GetValues(typeof(UI_NUMBER)))
+        foreach (var number in Enum.GetValues(typeof(UI_INDEX)))
         {
-            uiPairs.Add((UI_NUMBER)number,mainUIs[index]);
+            uiPairs.Add((UI_INDEX)number,mainUIs[index]);
             index++;
         }
     }
@@ -47,7 +47,7 @@ public class UISwicther : MonoBehaviour
     /// <summary>
     /// UIêÿë÷
     /// </summary>
-    public void switchUI(UI_NUMBER number)
+    public void switchUI(UI_INDEX number)
     {
         if(uiPairs.ContainsKey(number))
         {
@@ -58,5 +58,10 @@ public class UISwicther : MonoBehaviour
 
             uiPairs[number].SetActive(true);
         }
+    }
+
+    public GameObject GetUI(UI_INDEX index)
+    {
+        return uiPairs[index];
     }
 }
