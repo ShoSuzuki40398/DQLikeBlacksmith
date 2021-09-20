@@ -24,17 +24,19 @@ public class StageProperty
     private float height;
     
     // 横方向のマスの数
-    [SerializeField]
-    private int horizontalGridNum;
-    
+    [SerializeField,Min(1)]
+    private int horizontalCellNum;
+    public int HorizontalCellNum { get { return horizontalCellNum; } }
+
     // 縦方向のマスの数
-    [SerializeField]
-    private int verticalGridNum;
+    [SerializeField, Min(1)]
+    private int verticalCellNum;
+    public int VerticalCellNum { get { return verticalCellNum; } }
 
     // 作成する道具の画像
     [SerializeField]
-    private Sprite itemImage;
-    public Sprite ItemImage {  get{ return itemImage; } }
+    private List<Sprite> itemSprites;
+    public List<Sprite> ItemSprites {  get{ return itemSprites; } }
 
     // 熱度(炉の熱さ、打った時の進捗率に影響)
     [SerializeField]
@@ -47,4 +49,7 @@ public class StageProperty
     public int Hp { get { return hp; } }
 
     /// その他必要なパラメーターがあれば追加していく
+    
+    // 総マス数
+    public int TotalCellCount { get { return horizontalCellNum * verticalCellNum; } }
 }

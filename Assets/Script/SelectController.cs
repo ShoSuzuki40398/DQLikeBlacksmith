@@ -37,12 +37,7 @@ public class SelectController : MonoBehaviour
             obj.SetActive(enable);
         }
     }
-
-    public Vector3 getpos()
-    {
-        return selectIcons[0].transform.position;
-    }
-
+    
     /// <summary>
     /// ステージ情報取得
     /// </summary>

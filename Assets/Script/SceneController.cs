@@ -31,8 +31,9 @@ public class SceneController : MonoBehaviour
     [SerializeField]
     private StateMachine<SceneController, SCENE_STATE> stateMachine = new StateMachine<SceneController, SCENE_STATE>();
 
-
-
+    [SerializeField]
+    private  SCENE_STATE initState = SCENE_STATE.TITLE;
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -45,7 +46,8 @@ public class SceneController : MonoBehaviour
         stateMachine.AddState(SCENE_STATE.SELECT, new SelectState(this));
         stateMachine.AddState(SCENE_STATE.MAIN, new MainState(this));
         
-        TransScene(SCENE_STATE.TITLE);
+
+        TransScene(initState);
     }
 
     // Update is called once per frame
@@ -82,6 +84,7 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
+            MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.TITLE);
         }
 
@@ -92,7 +95,7 @@ public class SceneController : MonoBehaviour
         {
             if(Input.GetKeyDown(KeyCode.Space))
             {
-                owner.TransScene(SCENE_STATE.SELECT);
+                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner,0.5f, ()=>owner.TransScene(SCENE_STATE.SELECT)));
             }
         }
 
@@ -120,8 +123,12 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
+            MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.SELECT);
             owner.currentSelectIndex = 0;
+
+            // 選択枠の初期位置を設定（layoutgroupの計算後にしたいため1フレーム遅延）
+            MonoBehaviourExtention.Delay(owner, 1, ()=>owner.selectController.FocusFrame(0));
         }
 
         /// <summary>
@@ -129,14 +136,6 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            //if (isFirstFrame)
-            //{
-            //    isFirstFrame = false;
-            //    Debug.Log("first: " + owner.icon.name + " : " + owner.icon.transform.position);
-
-            //    owner.selectController.FocusFrame(owner.currentSelectIndex);
-            //}
-
             if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex - 1, 0, owner.stageNum - 1);
@@ -149,9 +148,8 @@ public class SceneController : MonoBehaviour
             }
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                owner.selectController.GetStageProperty(owner.currentSelectIndex).Console();
                 owner.stageController.SetPropertyAsset(owner.selectController.GetStageProperty(owner.currentSelectIndex));
-                owner.TransScene(SCENE_STATE.MAIN);
+                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.MAIN)));
             }
         }
 
@@ -178,7 +176,9 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
+            MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.MAIN);
+            owner.stageController.StageEntry();
         }
 
         /// <summary>
@@ -186,9 +186,9 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if(owner.stageController.Execute())
             {
-                owner.TransScene(SCENE_STATE.TITLE);
+                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.TITLE)));
             }
         }
 
@@ -197,6 +197,7 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Exit()
         {
+            owner.stageController.StageExit();
         }
     }
 }

@@ -3,15 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// éläpå`ògUI
+/// </summary>
 public class UISquareFrame : Graphic
-{
+{    
     // ëæÇ≥
-    [SerializeField]
-    private float weight;
+    public float weight;
 
-    // í∑Ç≥
-    [SerializeField]
-    private float length;
+    // â°ÇÃí∑Ç≥
+    public float horizontalLength;
+
+    // ècÇÃí∑Ç≥
+    public float verticalLength;
 
 
     protected override void OnPopulateMesh(VertexHelper vh)
@@ -20,10 +24,10 @@ public class UISquareFrame : Graphic
 
         Vector2 position = Vector2.zero;
 
-        Vector2 position1 = new Vector2(position.x - length,position.y - length);
-        Vector2 position2 = new Vector2(position.x + length, position.y - length);
-        Vector2 position3 = new Vector2(position.x + length, position.y + length);
-        Vector2 position4 = new Vector2(position.x - length, position.y + length);
+        Vector2 position1 = new Vector2(position.x - horizontalLength, position.y - verticalLength);
+        Vector2 position2 = new Vector2(position.x + horizontalLength, position.y - verticalLength);
+        Vector2 position3 = new Vector2(position.x + horizontalLength, position.y + verticalLength);
+        Vector2 position4 = new Vector2(position.x - horizontalLength, position.y + verticalLength);
 
         ///ê¸ÇP
 
@@ -124,6 +128,11 @@ public class UISquareFrame : Graphic
 
     }
 
+    /// <summary>
+    /// êÇê¸åvéZ
+    /// </summary>
+    /// <param name="vec"></param>
+    /// <returns></returns>
     private Vector2 CalcurateVerticalVector(Vector2 vec)
     {
         // 0èúéZÇÃñhé~
@@ -136,5 +145,16 @@ public class UISquareFrame : Graphic
             var verticalVector = new Vector2(1.0f, -vec.x / vec.y);
             return verticalVector.normalized;
         }
+    }
+
+    /// <summary>
+    /// ê¸ÇÃí∑Ç≥ê›íË
+    /// </summary>
+    /// <param name="h"></param>
+    /// <param name="v"></param>
+    public void SetLength(float h,float v)
+    {
+        horizontalLength = h;
+        verticalLength = v;
     }
 }

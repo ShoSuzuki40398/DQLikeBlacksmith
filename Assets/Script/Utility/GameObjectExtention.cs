@@ -40,4 +40,17 @@ public static class GameObjectExtention
             GameObject.Destroy(target);
         }
     }
+
+    /// <summary>
+    /// 子オブジェクトをすべて削除1
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="self"></param>
+    public static void DestroyChildren(this GameObject self)
+    {
+        foreach (Transform child in self.transform)
+        {
+            GameObject.Destroy(child.gameObject);
+        }
+    }
 }
