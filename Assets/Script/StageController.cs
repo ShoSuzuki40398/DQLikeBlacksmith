@@ -8,7 +8,25 @@ using System;
 
 public class StageController : MonoBehaviour
 {
-    // =====文字列定数=====
+    // ステージ状態
+    public enum STAGE_STATE
+    {
+        IDEL,   // 待機
+        HIT,    // たたく
+        SKILL,  // 特技
+        CHECK,  // くわしく見る
+        FINISH,  // しあげる
+        STAGE_END // ステージ終了
+    }
+
+    // ステージ状態制御
+    public readonly StateMachine<StageController, STAGE_STATE> stateMachine = new StateMachine<StageController, STAGE_STATE>();
+
+
+
+    /// -----------------------------------------------
+    /// Leftパネル
+    /// -----------------------------------------------
     // ガイド表示テキスト
     private const string GUIDE_DESCRIPTION_NEUTRAL = "どうする？";
 
@@ -25,18 +43,6 @@ public class StageController : MonoBehaviour
     // 温度テキスト
     [SerializeField]
     private Text heatLevelText;
-
-    // 製作物イメージ（仮）のちのち分割したものを表示することになる
-    List<ItemSliceImageCell> itemSliceImageCells = new List<ItemSliceImageCell>();
-
-    // 製作物イメージオブジェクトのプレハブ
-    [SerializeField]
-    private GameObject itemSliceImagePrefab;
-
-    // 製作物親パネル
-    [SerializeField]
-    private GameObject itemParentPanel;
-
 
     // コマンドテキスト
     [SerializeField]
@@ -69,23 +75,53 @@ public class StageController : MonoBehaviour
     [SerializeField]
     private List<GameObject> selectIcons;
 
+
+    /// -----------------------------------------------
+    /// Centerパネル
+    /// -----------------------------------------------
+
+    // 製作物マスと進捗ゲージUI
+    private struct CraftCell
+    {
+        public readonly ItemSliceImageCell cell;
+        public readonly CraftGuage guage;
+
+        public CraftCell(ItemSliceImageCell cell, CraftGuage guage)
+        {
+            this.cell = cell;
+            this.guage = guage;
+        }
+    }
+
+    // 製作物マスリスト
+    private List<CraftCell> craftCells = new List<CraftCell>();
+    
+    // 製作物パネル
+    [SerializeField]
+    private GameObject itemPanel;
+
+
+    [SerializeField]
+    private GameObject guagePanel;
+
+    //// ===== マス =====
+
+    // 製作物オブジェクトのプレハブ
+    [SerializeField]
+    private GameObject itemSliceImagePrefab;
+
     // 製作物マス選択枠
     [SerializeField]
     private UISquareFrame cellSelectFrame;
 
-    // コマンド種類
-    public enum STAGE_STATE
-    {
-        IDEL,   // 待機
-        HIT,    // たたく
-        SKILL,  // 特技
-        CHECK,  // くわしく見る
-        FINISH,  // しあげる
-        STAGE_END // ステージ終了
-    }
+    //// ===== 進捗ゲージ =====
+    // 進捗ゲージオブジェクトのプレハブ
+    [SerializeField]
+    private GameObject guagePrefab;
 
-    // コマンド状態制御
-    public readonly StateMachine<StageController, STAGE_STATE> stateMachine = new StateMachine<StageController, STAGE_STATE>();
+    // ゲージが伸びるまでにかかる時間
+    [SerializeField]
+    private float changeTimeGuageValue = 1.0f;
 
     private void Start()
     {
@@ -109,6 +145,7 @@ public class StageController : MonoBehaviour
             return true;
         }
         stateMachine.Update();
+
         return false;
     }
 
@@ -157,8 +194,9 @@ public class StageController : MonoBehaviour
         commandTextParent.DestroyChildren();
 
         // 製作物削除
-        itemSliceImageCells.Clear();
-        itemParentPanel.DestroyChildren();
+        craftCells.Clear();
+        itemPanel.DestroyChildren();
+        guagePanel.DestroyChildren();
     }
 
     /// <summary>
@@ -196,13 +234,56 @@ public class StageController : MonoBehaviour
 
         // Imageオブジェクト作成
         // StagePropertyから製作物画像取得
-        foreach (var sprite in currentStageProperty.ItemSprites)
+        foreach (var property in currentStageProperty.ItemCellProperties)
         {
-            GameObject obj = Instantiate(itemSliceImagePrefab, itemParentPanel.transform);
-            ItemSliceImageCell cell = obj.GetComponent<ItemSliceImageCell>();
-            cell.itemImage.sprite = sprite;
-            itemSliceImageCells.Add(cell);
+            // 製作物マス
+            GameObject cellObj = Instantiate(itemSliceImagePrefab, itemPanel.transform);
+            ItemSliceImageCell cell = cellObj.GetComponent<ItemSliceImageCell>();
+            cell.itemImage.sprite = property.ItemSliceSprite;
+
+            // 進捗ゲージ
+            GameObject guageObj = Instantiate(guagePrefab, guagePanel.transform);
+            CraftGuage guage = guageObj.GetComponent<CraftGuage>();
+            // クラフトゲージの理想値や成功エリアの値設定をする
+            // ※・・・・
+
+            guage.SetSliderWidth(property.LimitValuef);
+            guage.SetSliderMaxValue(property.LimitValuef);
+            guage.SetSliderValue(0);
+            guage.SetSuccessAreaWidth(property._SuccessArea.Width);
+
+            craftCells.Add(new CraftCell(cell, guage));
         }
+
+        // ゲージ調整(位置、向き)
+        MonoBehaviourExtention.Delay(this, 1, () =>
+        {
+            foreach (var itr in craftCells.Select((value,index)=> new { value,index}))
+            {
+                var property = currentStageProperty.ItemCellProperties[itr.index];
+                var guage = itr.value.guage;
+
+                var cellRect = itr.value.cell.GetComponent<RectTransform>();
+                guage.transform.position = cellRect.position;
+
+                float x = 0;
+                if ((itr.index + 1) % 2 != 0)
+                {   // マスの左側
+                    x -= guage.GetComponent<RectTransform>().sizeDelta.x;
+                    guage.SetDirection(Slider.Direction.RightToLeft);
+                    guage.SetIdealPointAnchorRight();
+                    guage.SetIdealPointX(-property.IdealValue);
+                }
+                else
+                {   // マスの右側
+                    x += guage.GetComponent<RectTransform>().sizeDelta.x;
+                    guage.SetDirection(Slider.Direction.LeftToRight);
+                    guage.SetIdealPointAnchorLeft();
+                    guage.SetIdealPointX(property.IdealValue);
+                }
+                guage.transform.position += new Vector3(x, 0, 0);
+            }
+        });
     }
 
     /// <summary>
@@ -242,6 +323,42 @@ public class StageController : MonoBehaviour
     {
         commandDiscriptionText.text = property.CommandDiscriptionStr;
         commandNeedHpText.text = MakeNeedHpText(property.NeedHp);
+    }
+
+    /// <summary>
+    /// 進捗ゲージを伸ばす
+    /// </summary>
+    /// <param name="cellIndex">指定のセル</param>
+    /// <param name="value">伸ばす数値（valueを加えた値になる）</param>
+    /// <returns></returns>
+    private IEnumerator ChangeGuageValue(int cellIndex,float value)
+    {
+        var property = currentStageProperty.ItemCellProperties[cellIndex];
+        var guage = craftCells[cellIndex].guage;
+        // 既に上限までいっていたら何もしない
+        if (property.LimitValuef < guage.SliderValue)
+        {
+            yield break;
+        }
+
+        float time = changeTimeGuageValue;
+        float startTime = Time.timeSinceLevelLoad;
+        
+        var startGuageValue = guage.SliderValue;
+        
+        while (true)
+        {
+            var diff = Time.timeSinceLevelLoad - startTime;
+            if (diff > time)
+            {
+                guage.SliderValue = startGuageValue + value;
+                break;
+            }
+            var rate = diff / time;
+            guage.SliderValue = startGuageValue + (value * rate);
+
+            yield return null;
+        }
     }
 
     //===============================================================================================================
@@ -346,8 +463,7 @@ public class StageController : MonoBehaviour
             Debug.Log("たたく");
             currentFocusCellIndex = 0;
             owner.cellSelectFrame.gameObject.SetActive(true);
-            
-            owner.cellSelectFrame.transform.position = owner.itemSliceImageCells[currentFocusCellIndex].transform.position;
+            owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
         }
 
         /// <summary>
@@ -395,10 +511,10 @@ public class StageController : MonoBehaviour
         public void CellFocusUp()
         {
             int index = currentFocusCellIndex - 2;
-            if (index.IsRange( 0, owner.currentStageProperty.TotalCellCount - 1))
+            if (index.IsRange(0, owner.currentStageProperty.TotalCellCount - 1))
             {
                 currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex - 2, 0, owner.currentStageProperty.TotalCellCount - 1);
-                owner.cellSelectFrame.transform.position = owner.itemSliceImageCells[currentFocusCellIndex].transform.position;
+                owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
             }
         }
 
@@ -408,10 +524,10 @@ public class StageController : MonoBehaviour
         public void CellFocusDown()
         {
             int index = currentFocusCellIndex + 2;
-            if (index.IsRange( 0, owner.currentStageProperty.TotalCellCount - 1))
+            if (index.IsRange(0, owner.currentStageProperty.TotalCellCount - 1))
             {
                 currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex + 2, 0, owner.currentStageProperty.TotalCellCount - 1);
-                owner.cellSelectFrame.transform.position = owner.itemSliceImageCells[currentFocusCellIndex].transform.position;
+                owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
             }
         }
 
@@ -422,10 +538,10 @@ public class StageController : MonoBehaviour
         {
             int index = currentFocusCellIndex + 1;
 
-            if (index.IsRange( 0, owner.currentStageProperty.TotalCellCount - 1))
+            if (index.IsRange(0, owner.currentStageProperty.TotalCellCount - 1))
             {
                 currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex + 1, 0, owner.currentStageProperty.TotalCellCount - 1);
-                owner.cellSelectFrame.transform.position = owner.itemSliceImageCells[currentFocusCellIndex].transform.position;
+                owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
             }
         }
 
@@ -437,10 +553,10 @@ public class StageController : MonoBehaviour
             int index = currentFocusCellIndex - 1;
 
 
-            if (index.IsRange( 0, owner.currentStageProperty.TotalCellCount - 1))
+            if (index.IsRange(0, owner.currentStageProperty.TotalCellCount - 1))
             {
                 currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex - 1, 0, owner.currentStageProperty.TotalCellCount - 1);
-                owner.cellSelectFrame.transform.position = owner.itemSliceImageCells[currentFocusCellIndex].transform.position;
+                owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
             }
         }
     }
@@ -528,6 +644,7 @@ public class StageController : MonoBehaviour
         public override void Enter()
         {
             Debug.Log("しあげる");
+            owner.TransState(STAGE_STATE.IDEL);
         }
 
         /// <summary>

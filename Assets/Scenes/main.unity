@@ -955,6 +955,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 447711908}
   m_CullTransparentMesh: 1
+--- !u!1 &522381799
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 522381800}
+  - component: {fileID: 522381801}
+  m_Layer: 5
+  m_Name: GuagePanel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &522381800
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 522381799}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1966609591}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 200, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &522381801
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 522381799}
+  m_CullTransparentMesh: 1
 --- !u!1 &523150334
 GameObject:
   m_ObjectHideFlags: 0
@@ -2684,20 +2728,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   guideText: {fileID: 537614919}
   heatLevelText: {fileID: 1131747403}
-  itemSliceImagePrefab: {fileID: 3720363749251647169, guid: 4e8f686be6e435b4e920f277e3e29ed0, type: 3}
-  itemParentPanel: {fileID: 557797144}
   commandTextParent: {fileID: 291127550}
   commandDiscriptionText: {fileID: 1550015071}
   commandNeedHpText: {fileID: 2104320197}
   commandPropertyAssets:
   - {fileID: 11400000, guid: c2f2a8cfd27522d488871c778a66f8ff, type: 2}
   - {fileID: 11400000, guid: d964fcd5dbd11ef46aaa851999380f8e, type: 2}
-  - {fileID: 11400000, guid: 6b83c5ad960ce4a4eab7548476640023, type: 2}
   - {fileID: 11400000, guid: 850690fa1ddce694fb8c54c16237aac8, type: 2}
+  - {fileID: 11400000, guid: 6b83c5ad960ce4a4eab7548476640023, type: 2}
   comamndTextPrefab: {fileID: 6621742289003937995, guid: 9eba0ce9a8b74f34695e40115d72ceb7, type: 3}
   commandSelectFrame: {fileID: 1980109536}
   selectIcons: []
+  itemPanel: {fileID: 557797144}
+  guagePanel: {fileID: 522381799}
+  itemSliceImagePrefab: {fileID: 3720363749251647169, guid: 4e8f686be6e435b4e920f277e3e29ed0, type: 3}
   cellSelectFrame: {fileID: 1602779692}
+  guagePrefab: {fileID: 935578302770134680, guid: 0c7c88b22c7432e4c9c62ef3524dffd3, type: 3}
+  changeTimeGuageValue: 0.8
 --- !u!1 &1372665043
 GameObject:
   m_ObjectHideFlags: 0
@@ -2892,8 +2939,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 30, y: 0}
-  m_SizeDelta: {x: 350, y: 350}
+  m_AnchoredPosition: {x: 75, y: 0}
+  m_SizeDelta: {x: 600, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1448059013
 MonoBehaviour:
@@ -3707,6 +3754,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 557797145}
+  - {fileID: 522381800}
   m_Father: {fileID: 1448059012}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3906,7 +3954,7 @@ MonoBehaviour:
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   weight: 2
-  horizontalLength: 70
+  horizontalLength: 90
   verticalLength: 10
 --- !u!114 &1980109537
 MonoBehaviour:
@@ -3994,7 +4042,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 10, y: 30}
-  m_SizeDelta: {x: 180, y: 250}
+  m_SizeDelta: {x: 200, y: 250}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &2091477642
 MonoBehaviour:

@@ -93,7 +93,7 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            if(Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner,0.5f, ()=>owner.TransScene(SCENE_STATE.SELECT)));
             }

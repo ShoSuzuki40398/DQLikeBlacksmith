@@ -49,6 +49,12 @@ public static class Define
         AXE
     }
 
+    // 製作物限界値倍率
+    public static float itemCellLimitMagnification = 1.3f;
+
+    // 成功範囲値倍率
+    public static float craftSuccessMagnification = 1.1f;
+
 
     public static bool InputUpButton()
     {

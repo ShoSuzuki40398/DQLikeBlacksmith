@@ -33,10 +33,22 @@ public class StageProperty
     private int verticalCellNum;
     public int VerticalCellNum { get { return verticalCellNum; } }
 
-    // ì¬‚·‚é“¹‹ï‚Ì‰æ‘œ
+    // ì¬‚·‚é¬‰Ê•¨‚Ìî•ñ
     [SerializeField]
-    private List<Sprite> itemSprites;
-    public List<Sprite> ItemSprites {  get{ return itemSprites; } }
+    private List<ItemCellProperty> itemCellProperties;
+    public List<ItemCellProperty> ItemCellProperties { get { return itemCellProperties; } }
+    public List<Sprite> ItemSprites
+    {
+        get
+        {
+            List<Sprite> res = new List<Sprite>();
+            foreach(var cell in itemCellProperties)
+            {
+                res.Add(cell.ItemSliceSprite);
+            }
+            return res;
+        }
+    }
 
     // ”M“x(˜F‚Ì”M‚³A‘Å‚Á‚½‚Ìi’»—¦‚É‰e‹¿)
     [SerializeField]
