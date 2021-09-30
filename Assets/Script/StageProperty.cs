@@ -60,8 +60,21 @@ public class StageProperty
     private int hp;
     public int Hp { get { return hp; } }
 
-    /// その他必要なパラメーターがあれば追加していく
-    
+    // 普通の出来のボーダー
+    [SerializeField]
+    private int normalDetailValue;
+    public int NormalDetailValue { get { return normalDetailValue; } }
+
+    // 良い出来のボーダー
+    [SerializeField]
+    private int goodDetailValue;
+    public int GoodDetailValue { get { return goodDetailValue; } }
+
+    // すごい出来のボーダー
+    [SerializeField]
+    private int greatDetailValue;
+    public int GreatDetailValue { get { return greatDetailValue; } }
+
     // 総マス数
     public int TotalCellCount { get { return horizontalCellNum * verticalCellNum; } }
 }

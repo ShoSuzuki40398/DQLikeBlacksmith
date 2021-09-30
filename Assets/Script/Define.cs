@@ -49,12 +49,28 @@ public static class Define
         AXE
     }
 
-    // 製作物限界値倍率
-    public static float itemCellLimitMagnification = 1.3f;
-
+    
     // 成功範囲値倍率
     public static float craftSuccessMagnification = 1.1f;
 
+    // 成功範囲内ゲージ色(オレンジ)
+    public static Color craftGuageSuccessColor = new Color32(255,207,76,255);
+
+    // 理想範囲内ゲージ色
+    public static Color craftGuageIdealColor = Color.yellow;
+
+    // 普通範囲内ゲージ色
+    public static Color craftGuageNormalColor = Color.cyan;
+
+    // 理想値の許容範囲(理想値ピッタリはエグいのである程度ずれてもOKとする値)
+    public static float idealRangeValue = 1.0f;
+
+    // 進捗（普通）の評価値
+    public static int normalDetailValue = 1;
+    // 進捗（成功）の評価値
+    public static int successDetailValue = 2;
+    // 進捗（理想）の評価値
+    public static int idealDetailValue = 3;
 
     public static bool InputUpButton()
     {
@@ -101,4 +117,12 @@ public static class Define
         return false;
     }
 
+    public static bool InputBackButton()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            return true;
+        }
+        return false;
+    }
 }

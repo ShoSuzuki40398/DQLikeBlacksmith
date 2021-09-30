@@ -8,6 +8,14 @@ using UnityEngine.UI;
 /// </summary>
 public class CraftGuage : MonoBehaviour
 {
+    public enum GUAGE_STATUS
+    {
+        IDEAL,      // 理想
+        SUCCESS,    // 成功
+        NORMAL,     // 普通
+    }
+
+
     // ゲージ制御用スライダー
     [SerializeField]
     private Slider slider;
@@ -24,6 +32,11 @@ public class CraftGuage : MonoBehaviour
     [SerializeField]
     private Image idealPoint;
 
+    // 現在進捗度テキスト
+    [SerializeField]
+    private Text currentValueText;
+
+    // スライダー値
     public float SliderValue { get { return slider.value; } set { slider.value = value; } }
 
     public void SetSliderMaxValue(float value)
@@ -38,9 +51,7 @@ public class CraftGuage : MonoBehaviour
 
     public void SetSliderColor(Color color)
     {
-        ColorBlock block = new ColorBlock();
-        block.normalColor = color;
-        slider.colors = block;
+        barImage.color = color;
     }
 
     public void SetDirection(Slider.Direction dir)
@@ -83,5 +94,49 @@ public class CraftGuage : MonoBehaviour
     {
         idealPoint.GetComponent<RectTransform>().anchorMax = max;
         idealPoint.GetComponent<RectTransform>().anchorMin = min;
+    }
+
+    /// <summary>
+    /// 現在進捗度を表示する
+    /// </summary>
+    public void ShowValue()
+    {
+        currentValueText.text = slider.value.ToString();
+        currentValueText.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// 現在進捗度を隠す
+    /// </summary>
+    public void HideValue()
+    {
+        currentValueText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 進捗ゲージの状態取得
+    /// </summary>
+    /// <param name="cellProperty"></param>
+    /// <returns></returns>
+    public GUAGE_STATUS GetGuageStatus(ItemCellProperty cellProperty)
+    {
+        GUAGE_STATUS res = GUAGE_STATUS.NORMAL;
+
+        // 色変え
+        float idealRangeValue = Define.idealRangeValue;
+        if (SliderValue <= (cellProperty.IdealValue + idealRangeValue) && SliderValue >= (cellProperty.IdealValue - idealRangeValue))
+        {   // 理想値範囲
+            res = GUAGE_STATUS.IDEAL;
+        }
+        else if (SliderValue <= cellProperty._SuccessArea.max && SliderValue >= cellProperty._SuccessArea.min)
+        {   // 成功値範囲
+            res = GUAGE_STATUS.SUCCESS;
+        }
+        else
+        {   // 普通範囲
+            res = GUAGE_STATUS.NORMAL;
+        }
+
+        return res;
     }
 }

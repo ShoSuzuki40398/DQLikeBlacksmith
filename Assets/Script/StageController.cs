@@ -19,6 +19,16 @@ public class StageController : MonoBehaviour
         STAGE_END // ステージ終了
     }
 
+    // 製作物評価
+    public enum DETAIL_STATUS
+    {
+        BAD,
+        NORMAL,
+        GOOD,
+        GREAT
+    }
+
+
     // ステージ状態制御
     public readonly StateMachine<StageController, STAGE_STATE> stateMachine = new StateMachine<StageController, STAGE_STATE>();
 
@@ -123,6 +133,23 @@ public class StageController : MonoBehaviour
     [SerializeField]
     private float changeTimeGuageValue = 1.0f;
 
+    // ゲージ進捗時のエフェクト
+    [SerializeField]
+    private GameObject hitEffectPefab;
+
+    /// -----------------------------------------------
+    /// Footerパネル
+    /// -----------------------------------------------
+
+    // フッターUI
+    [SerializeField]
+    private FooterUI footer;
+
+    // フッター情報
+    [SerializeField]
+    private FooterPropertyAsset footerPropertyAsset;
+    private FooterProperty footerProperty;
+
     private void Start()
     {
         // 状態登録
@@ -132,6 +159,8 @@ public class StageController : MonoBehaviour
         stateMachine.AddState(STAGE_STATE.CHECK, new CheckState(this));
         stateMachine.AddState(STAGE_STATE.FINISH, new FinishState(this));
         stateMachine.AddState(STAGE_STATE.STAGE_END, new StageEndState(this));
+
+        footerProperty = footerPropertyAsset.footerProperty;
     }
 
     /// <summary>
@@ -140,6 +169,31 @@ public class StageController : MonoBehaviour
     /// <returns>ステージ終了でtrue</returns>
     public bool Execute()
     {
+        if(Input.GetKeyDown(KeyCode.D))
+        {
+            if(Input.GetKey(KeyCode.LeftShift))
+            {
+                Craft(1, 10);
+            }
+            else
+            {
+                Craft(0, 10);
+            }
+                       
+        }
+        else if(Input.GetKeyDown(KeyCode.A))
+        {
+            StartCoroutine(ChangeGuageValue(0, -5));
+        }
+        else if (Input.GetKeyDown(KeyCode.W))
+        {
+            Craft(0, 1);
+        }
+        else if (Input.GetKeyDown(KeyCode.S))
+        {
+            StartCoroutine(ChangeGuageValue(0, -1));
+        }
+
         if (stateMachine.IsCurrentState(STAGE_STATE.STAGE_END))
         {
             return true;
@@ -244,13 +298,13 @@ public class StageController : MonoBehaviour
             // 進捗ゲージ
             GameObject guageObj = Instantiate(guagePrefab, guagePanel.transform);
             CraftGuage guage = guageObj.GetComponent<CraftGuage>();
-            // クラフトゲージの理想値や成功エリアの値設定をする
-            // ※・・・・
 
+            // 進捗ゲージの理想値や成功エリアの値設定をする
             guage.SetSliderWidth(property.LimitValuef);
             guage.SetSliderMaxValue(property.LimitValuef);
             guage.SetSliderValue(0);
             guage.SetSuccessAreaWidth(property._SuccessArea.Width);
+            guage.SetSliderColor(Define.craftGuageNormalColor);
 
             craftCells.Add(new CraftCell(cell, guage));
         }
@@ -326,6 +380,29 @@ public class StageController : MonoBehaviour
     }
 
     /// <summary>
+    /// 製作を進める
+    /// </summary>
+    private void Craft(int cellIndex, float value)
+    {
+        CreateHitEffect(cellIndex,value);
+        StartCoroutine(ChangeGuageValue(cellIndex,value));
+    }
+
+    /// <summary>
+    /// 進捗エフェクト作成
+    /// </summary>
+    /// <param name="value"></param>
+    private void CreateHitEffect(int cellIndex, float value)
+    {
+        var canvas = GameObject.Find("Canvas");
+        var guage = craftCells[cellIndex].guage;
+        Vector2 pos = guage.GetComponent<RectTransform>().position;
+        GameObject obj = Instantiate(hitEffectPefab, pos, Quaternion.identity, canvas.transform);
+        obj.GetComponent<HitEffect>().SetValue(value);
+        obj.GetComponent<HitEffect>().Fire();
+    }
+
+    /// <summary>
     /// 進捗ゲージを伸ばす
     /// </summary>
     /// <param name="cellIndex">指定のセル</param>
@@ -345,17 +422,46 @@ public class StageController : MonoBehaviour
         float startTime = Time.timeSinceLevelLoad;
         
         var startGuageValue = guage.SliderValue;
-        
+        Debug.Log("SliderValue :" + (guage.SliderValue + value));
         while (true)
         {
             var diff = Time.timeSinceLevelLoad - startTime;
+            var rate = diff / time;
+            guage.SliderValue = startGuageValue + (value * rate);
+
+            // ゲージ変更終了
             if (diff > time)
             {
                 guage.SliderValue = startGuageValue + value;
+
+                // 色変え
+                switch (guage.GetGuageStatus(property))
+                {
+                    case CraftGuage.GUAGE_STATUS.IDEAL: guage.SetSliderColor(Define.craftGuageIdealColor); break;
+                    case CraftGuage.GUAGE_STATUS.SUCCESS: guage.SetSliderColor(Define.craftGuageSuccessColor); break;
+                    case CraftGuage.GUAGE_STATUS.NORMAL: guage.SetSliderColor(Define.craftGuageNormalColor); break;
+                }
+
+                //// 色変え
+                //float idealRangeValue = Define.idealRangeValue;
+                //if (guage.SliderValue <= (property.IdealValue + idealRangeValue) && guage.SliderValue >= (property.IdealValue - idealRangeValue))
+                //{   // 理想値範囲
+                //    Debug.Log("理想値");
+                //    guage.SetSliderColor(Define.craftGuageIdealColor);
+                //}
+                //else if (guage.SliderValue <= property._SuccessArea.max && guage.SliderValue >= property._SuccessArea.min)
+                //{   // 成功値範囲
+                //    Debug.Log("成功値");
+                //    guage.SetSliderColor(Define.craftGuageSuccessColor);
+                //}
+                //else
+                //{   // 普通範囲
+                //    guage.SetSliderColor(Define.craftGuageNormalColor);
+                //}
+                
                 break;
             }
-            var rate = diff / time;
-            guage.SliderValue = startGuageValue + (value * rate);
+            
 
             yield return null;
         }
@@ -610,7 +716,9 @@ public class StageController : MonoBehaviour
         public override void Enter()
         {
             Debug.Log("くわしく見る");
-            owner.TransState(STAGE_STATE.IDEL);
+
+            int detailValue = CalcDetailValue();
+            ShowDetail(detailValue);
         }
 
         /// <summary>
@@ -618,7 +726,10 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-
+            if(Define.InputEnterButton() || Define.InputBackButton())
+            {
+                owner.TransState(STAGE_STATE.IDEL);
+            }
         }
 
         /// <summary>
@@ -626,7 +737,95 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Exit()
         {
+            HideDetail();
         }
+
+        /// <summary>
+        /// 詳細表示
+        /// </summary>
+        private void ShowDetail(int detailValue)
+        {
+            var craftCells = owner.craftCells;
+            foreach(var cell in craftCells)
+            {
+                cell.guage.ShowValue();
+            }
+
+            // 出来高表示
+            switch (CheckDetail(detailValue))
+            {
+                case DETAIL_STATUS.BAD: owner.footer.SetFooterText(owner.footerProperty.DetailTextBad); break;
+                case DETAIL_STATUS.NORMAL: owner.footer.SetFooterText(owner.footerProperty.DetailTextNormal); break;
+                case DETAIL_STATUS.GOOD: owner.footer.SetFooterText(owner.footerProperty.DetailTextGood); break;
+                case DETAIL_STATUS.GREAT: owner.footer.SetFooterText(owner.footerProperty.DetailTextGreat); break;
+            }
+        }
+
+        /// <summary>
+        /// 詳細非表示
+        /// </summary>
+        private void HideDetail()
+        {
+            var craftCells = owner.craftCells;
+            foreach (var cell in craftCells)
+            {
+                cell.guage.HideValue();
+            }
+
+            owner.footer.ClearFooterText();
+        }
+
+        /// <summary>
+        /// 評価値計算
+        /// </summary>
+        /// <returns></returns>
+        private int CalcDetailValue()
+        {
+            int res = 0;
+            var stageProperty = owner.currentStageProperty;
+            foreach (var itr in owner.craftCells.Select((value, index) => new { value, index }))
+            {
+                var property = stageProperty.ItemCellProperties[itr.index];
+                var guage = itr.value.guage;
+
+                switch (guage.GetGuageStatus(property))
+                {
+                    case CraftGuage.GUAGE_STATUS.IDEAL: res += Define.idealDetailValue; break;
+                    case CraftGuage.GUAGE_STATUS.SUCCESS: res += Define.successDetailValue; break;
+                    case CraftGuage.GUAGE_STATUS.NORMAL: res += Define.normalDetailValue; break;
+                }
+            }
+
+            return res;
+        }
+
+        /// <summary>
+        /// 評価値チェック
+        /// </summary>
+        /// <param name="value">各ゲージの合算評価値</param>
+        /// <returns></returns>
+        private DETAIL_STATUS CheckDetail(int value)
+        {
+            DETAIL_STATUS res = DETAIL_STATUS.BAD;
+            var stageProperty = owner.currentStageProperty;
+
+            if(value >= stageProperty.GreatDetailValue)
+            {
+                res = DETAIL_STATUS.GREAT;
+            }
+            else if(value >= stageProperty.GoodDetailValue)
+            {
+                res = DETAIL_STATUS.GOOD;
+            }
+            else if(value >= stageProperty.NormalDetailValue)
+            {
+                res = DETAIL_STATUS.NORMAL;
+            }
+
+            return res;
+        }
+
+
     }
 
     /// <summary>

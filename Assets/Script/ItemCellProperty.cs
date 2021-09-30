@@ -33,12 +33,6 @@ public class ItemCellProperty
     public int limitValue;
     public float LimitValuef  { get { return limitValue; } }
 
-    //// 限界値（限界値をいちいち決めるのが面倒なので倍率決めて固定）
-    //public int LimitlValue { get { return (int)(idealValue * Define.itemCellLimitMagnification); } }
-    //// 限界値（限界値をいちいち決めるのが面倒なので倍率決めて固定）
-    //public float LimitlValuef { get { return idealValue * Define.itemCellLimitMagnification; } }
-
-
     // 成功許容値（理想値のから外れてもある程度は成功判定とするための値、限界値と同じく倍率を決めて固定）
     public SuccessArea _SuccessArea
     {
