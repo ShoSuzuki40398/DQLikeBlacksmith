@@ -10,9 +10,9 @@ public class CommandProperty
     public enum COMMAND_TYPE
     {
         HIT,    // ‚½‚½‚­
-        SKILL,  // “Á‹Z
+        SKILL,  // ‚Æ‚­‚¬
         CHECK,  // ‚­‚í‚µ‚­Œ©‚é
-        FINISH  // ‚µ‚ ‚°‚é
+        FINISH,  // ‚µ‚ ‚°‚é
     }
 
     // Ží—Þ
