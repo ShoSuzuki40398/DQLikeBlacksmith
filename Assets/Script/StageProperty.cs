@@ -50,15 +50,20 @@ public class StageProperty
         }
     }
 
+    // 完成画像
+    [SerializeField]
+    private Sprite resultSprite;
+    public Sprite ResultSprite { get { return resultSprite; } }
+
     // 熱度(炉の熱さ、打った時の進捗率に影響)
     [SerializeField]
     private int heatLevel;
-    public int HeatLevel { get { return heatLevel; } }
+    public int HeatLevel { get { return heatLevel; } set { heatLevel = value; } }
 
     // 体力(残りの打てる目安)
     [SerializeField]
     private int hp;
-    public int Hp { get { return hp; } }
+    public int Hp { get { return hp; } set { hp = value; } }
 
     // 普通の出来のボーダー
     [SerializeField]
@@ -77,4 +82,10 @@ public class StageProperty
 
     // 総マス数
     public int TotalCellCount { get { return horizontalCellNum * verticalCellNum; } }
+
+
+    public StageProperty Clone()
+    {
+        return (StageProperty)MemberwiseClone();
+    }
 }

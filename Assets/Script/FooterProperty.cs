@@ -14,4 +14,13 @@ public class FooterProperty
     public string DetailTextGood;
     // くわしく見る（とても良い出来）
     public string DetailTextGreat;
+
+    // 温度レベル不足
+    public string NoHeatLevel;
+
+    // 体力不足
+    public string NoHp;
+
+    // これ以上冷やせない
+    public string NoCoolDown;
 }

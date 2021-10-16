@@ -20,6 +20,9 @@ public class SceneController : MonoBehaviour
     // 選択しているステージ
     private int currentSelectIndex = 0;
     private int stageNum = 3;
+
+    // タイトル制御
+    private TitleController titleController;
     
     // ステージ選択制御
     private SelectController selectController;
@@ -31,12 +34,13 @@ public class SceneController : MonoBehaviour
     [SerializeField]
     private StateMachine<SceneController, SCENE_STATE> stateMachine = new StateMachine<SceneController, SCENE_STATE>();
 
-    [SerializeField]
-    private  SCENE_STATE initState = SCENE_STATE.TITLE;
+    // 入力可能フラグ
+    private bool isInput = true;
     
     // Start is called before the first frame update
     void Start()
     {
+        titleController = GetComponent<TitleController>();
         selectController = GetComponent<SelectController>();
         stageController = GetComponent<StageController>();
         swicther = GetComponent<UISwicther>();
@@ -45,9 +49,8 @@ public class SceneController : MonoBehaviour
         stateMachine.AddState(SCENE_STATE.TITLE, new TitleState(this));
         stateMachine.AddState(SCENE_STATE.SELECT, new SelectState(this));
         stateMachine.AddState(SCENE_STATE.MAIN, new MainState(this));
-        
 
-        TransScene(initState);
+        TransScene(SCENE_STATE.TITLE);
     }
 
     // Update is called once per frame
@@ -84,6 +87,7 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
+            owner.isInput = true;
             MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.TITLE);
         }
@@ -93,10 +97,39 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
+            if(!owner.isInput)
+            {
+                return;
+            }
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner,0.5f, ()=>owner.TransScene(SCENE_STATE.SELECT)));
+                switch (owner.titleController.GetSelectIndex())
+                {
+                    case TitleController.TITLE_INDEX.START: // ゲーム開始
+                        MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => 
+                        
+                        {
+                            owner.titleController.ResetFrameColor();
+                            owner.TransScene(SCENE_STATE.SELECT);
+                        }));
+                        owner.titleController.FlashingFrame();
+                        owner.isInput = false;
+                        break;
+                    case TitleController.TITLE_INDEX.EXIT:  // ゲーム終了
+                        Define.EndGame();
+                        break;
+                }
             }
+            else if(Define.InputUpButton())
+            {
+                owner.titleController.FocusUp();
+            }
+            else if(Define.InputDownButton())
+            {
+                owner.titleController.FocusDown();
+            }
+
         }
 
         /// <summary>
@@ -123,6 +156,7 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
+            owner.isInput = true;
             MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.SELECT);
             owner.currentSelectIndex = 0;
@@ -146,11 +180,17 @@ public class SceneController : MonoBehaviour
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex + 1, 0, owner.stageNum - 1);
                 owner.selectController.FocusFrame(owner.currentSelectIndex);
             }
-            if (Input.GetKeyDown(KeyCode.Space))
+            else if (Input.GetKeyDown(KeyCode.Space))
             {
+                owner.selectController.FlashingFrame();
                 owner.stageController.SetPropertyAsset(owner.selectController.GetStageProperty(owner.currentSelectIndex));
                 MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.MAIN)));
             }
+            else if(Define.InputBackButton())
+            {
+                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.TITLE)));
+            }
+
         }
 
         /// <summary>
@@ -188,7 +228,7 @@ public class SceneController : MonoBehaviour
         {
             if(owner.stageController.Execute())
             {
-                MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.TITLE)));
+                owner.TransScene(SCENE_STATE.TITLE);
             }
         }
 

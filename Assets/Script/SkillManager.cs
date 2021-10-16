@@ -26,6 +26,9 @@ public class SkillManager : MonoBehaviour
         }
     }
 
+    // 「たたく」情報を取得
+    public SkillProperty StandardHit { get { return skillPropertyAssets[0].skillProperty; } }
+
     // スキル数
     public int SkillCount { get { return skillPropertyAssets.Count - 1; } }
 

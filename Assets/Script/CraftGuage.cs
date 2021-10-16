@@ -36,6 +36,12 @@ public class CraftGuage : MonoBehaviour
     [SerializeField]
     private Text currentValueText;
 
+    [SerializeField]
+    private ImageFakeBloom fakeBloom;
+
+    [SerializeField]
+    private float maxBlurSig = 10.0f;
+
     // スライダー値
     public float SliderValue { get { return slider.value; } set { slider.value = value; } }
 
@@ -111,6 +117,32 @@ public class CraftGuage : MonoBehaviour
     public void HideValue()
     {
         currentValueText.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 理想位置点灯
+    /// </summary>
+    public void LightOnIdealPoint()
+    {
+        SetIdealBlurSig(maxBlurSig);
+    }
+
+    /// <summary>
+    /// 理想位置消灯
+    /// </summary>
+    public void LightOffIdealPoint()
+    {
+        SetIdealBlurSig(0);
+    }
+
+    /// <summary>
+    /// 理想位置のブラー値設定
+    /// </summary>
+    /// <param name="value"></param>
+    public void SetIdealBlurSig(float value)
+    {
+        fakeBloom.BlurSig = value;
+        fakeBloom.UpdateGlow();
     }
 
     /// <summary>

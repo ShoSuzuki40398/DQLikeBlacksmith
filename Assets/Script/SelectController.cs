@@ -4,16 +4,29 @@ using UnityEngine;
 
 public class SelectController : MonoBehaviour
 {
-    // ステージ選択
+    // ステージ選択枠
     [SerializeField]
     private UISquareFrame selectFrame;
+    // ステージアイコン
     [SerializeField]
     private List<GameObject> selectIcons;
 
     // ステージ初期情報
     [SerializeField]
     private List<StagePropertyAsset> stagePropertyAssets = new List<StagePropertyAsset>();
-        
+
+    // 枠の点滅時間
+    [SerializeField]
+    private float frameFlashTime = 1.0f;
+
+    /// <summary>
+    /// 選択枠点滅
+    /// </summary>
+    public void FlashingFrame()
+    {
+        selectFrame.Flashing(frameFlashTime);
+    }
+
     /// <summary>
     /// フォーカスしたいアイコンにフレームを合わせる
     /// </summary>

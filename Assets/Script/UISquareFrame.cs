@@ -17,6 +17,16 @@ public class UISquareFrame : Graphic
     // 縦の長さ
     public float verticalLength;
 
+    // 点滅速さ
+    public float flashSpeed = 1.0f;
+
+    // 初期色
+    private Color initColor;
+
+    private void Awake()
+    {
+        initColor = color;
+    }
 
     protected override void OnPopulateMesh(VertexHelper vh)
     {
@@ -156,5 +166,53 @@ public class UISquareFrame : Graphic
     {
         horizontalLength = h;
         verticalLength = v;
+    }
+
+    /// <summary>
+    /// 点滅
+    /// </summary>
+    /// <param name="time">持続時間</param>
+    public void Flashing(float time)
+    {
+        StartCoroutine(ExecFlashing(time));
+    }
+
+    /// <summary>
+    /// 点滅処理
+    /// </summary>
+    /// <param name="time"></param>
+    /// <returns></returns>
+    IEnumerator ExecFlashing(float time)
+    {
+        float startTime = Time.timeSinceLevelLoad;
+
+        while (true)
+        {
+            var diff = Time.timeSinceLevelLoad - startTime;
+            // 変更終了
+            if (diff > time)
+            {
+                ResetColor();
+                yield break;
+            }
+
+            float alpha_Sin = Mathf.Sin(Time.time * flashSpeed) / 2 + 0.5f;
+
+            yield return null;
+
+            Color _color = color;
+
+            _color.a = alpha_Sin;
+
+            color = _color;
+        }
+    }
+
+    /// <summary>
+    /// 色を始めに戻す
+    /// </summary>
+    public void ResetColor()
+    {
+        color = initColor;
     }
 }
