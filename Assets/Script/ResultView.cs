@@ -48,14 +48,14 @@ public class ResultView : MonoBehaviour
     /// <summary>
     /// ƒŠƒUƒ‹ƒg•\Ž¦
     /// </summary>
-    public void DisplayResult(Sprite itemSprite,int revue)
+    public void DisplayResult(Sprite itemSprite,int revue, Action onComplete = null)
     {
         this.gameObject.SetActive(true);
         resultPanel.SetActive(false);
         footer.SetActive(false);
         itemImage.sprite = itemSprite;
         LightOnStar(revue);
-        StartCoroutine(ExecActiveBackground());
+        StartCoroutine(ExecActiveBackground(onComplete));
     }
 
     /// <summary>
@@ -149,7 +149,7 @@ public class ResultView : MonoBehaviour
     /// </summary>
     public void LightOnStar(int index)
     {
-        if(starImages.Count <= index + 1)
+        if(starImages.Count < index + 1)
         {
             return;
         }

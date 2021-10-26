@@ -52,6 +52,6 @@ public class HitEffect : MonoBehaviour
     public void Fire()
     {
         fire = true;
-        this.transform.DOLocalMoveY(moveYValue, moveYTime);
+        this.transform.DOMoveY(transform.position.y +  moveYValue,moveYTime);
     }
 }

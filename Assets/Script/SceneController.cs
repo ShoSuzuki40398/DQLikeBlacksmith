@@ -90,6 +90,7 @@ public class SceneController : MonoBehaviour
             owner.isInput = true;
             MaskFadeController.Instance.FadeIn(1.0f);
             owner.swicther.switchUI(UISwicther.UI_INDEX.TITLE);
+            AudioManager.Instance.PlayBGM(Define.BGM.MAIN);
         }
 
         /// <summary>
@@ -104,6 +105,7 @@ public class SceneController : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
                 switch (owner.titleController.GetSelectIndex())
                 {
                     case TitleController.TITLE_INDEX.START: // ÉQÅ[ÉÄäJén
@@ -123,10 +125,12 @@ public class SceneController : MonoBehaviour
             }
             else if(Define.InputUpButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.titleController.FocusUp();
             }
             else if(Define.InputDownButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.titleController.FocusDown();
             }
 
@@ -145,8 +149,6 @@ public class SceneController : MonoBehaviour
     /// </summary>
     private class SelectState : State<SceneController>
     {
-        //bool isFirstFrame = true;
-
         public SelectState(SceneController owner) : base(owner)
         {
         }
@@ -172,22 +174,26 @@ public class SceneController : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow))
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex - 1, 0, owner.stageNum - 1);
                 owner.selectController.FocusFrame(owner.currentSelectIndex);
             }
             else if (Input.GetKeyDown(KeyCode.RightArrow))
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex + 1, 0, owner.stageNum - 1);
                 owner.selectController.FocusFrame(owner.currentSelectIndex);
             }
             else if (Input.GetKeyDown(KeyCode.Space))
             {
+                AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
                 owner.selectController.FlashingFrame();
                 owner.stageController.SetPropertyAsset(owner.selectController.GetStageProperty(owner.currentSelectIndex));
                 MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.MAIN)));
             }
             else if(Define.InputBackButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.CANCEL_SOUND01);
                 MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => owner.TransScene(SCENE_STATE.TITLE)));
             }
 

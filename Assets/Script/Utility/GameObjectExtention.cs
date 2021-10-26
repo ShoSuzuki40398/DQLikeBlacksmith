@@ -27,6 +27,30 @@ public static class GameObjectExtention
     }
 
     /// <summary>
+    /// 子要素の指定したコンポーネントをすべて取得
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="self"></param>
+    /// <returns></returns>
+    public static List<T> GetComponentsOnlyChildren<T>(this GameObject self) where T: Component
+    {
+        var children = self.GetComponentsInChildren<T>();
+
+        List<T> res = new List<T>(children);
+
+        foreach(var com in res)
+        {
+            if(com.gameObject.GetInstanceID() == self.GetInstanceID())
+            {
+                res.Remove(com);
+                break;
+            }
+        }
+
+        return res;
+    }
+
+    /// <summary>
     /// 指定されたコンポーネントをすべて破棄する
     /// </summary>
     /// <typeparam name="T"></typeparam>

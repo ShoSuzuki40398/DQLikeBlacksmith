@@ -25,20 +25,22 @@ public static class Define
     // BGM定義
     public enum BGM
     {
-        TITLE,
         MAIN
     }
 
     // SE定義
     public enum SE
     {
-        PLAYER_SHIFT,
-        PLAYER_ATTACK_HIT,
-        PLAYER_BURST,
-        ENEMY_BURST,
-        BUTTON_CLICK,
-        BUTTON_HIGHLIGHT,
-        SCORE_DISPLAY
+        HAMMER_HIT01,
+        SELECT_SOUND01,
+        CANCEL_SOUND01,
+        DECISION_SOUND01,
+        ACCENT01,
+        RESULT01,
+        RESULT02,
+        RESULT03,
+        HEATUP01,
+        COOLDOWN01
     }
 
     // ステージ定義

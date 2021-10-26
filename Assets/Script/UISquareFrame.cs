@@ -169,6 +169,24 @@ public class UISquareFrame : Graphic
     }
 
     /// <summary>
+    /// ‰¡’·‚³æZ
+    /// </summary>
+    /// <param name="value"></param>
+    public void MultiplierHorizontal(float value)
+    {
+        horizontalLength *= value;
+    }
+
+    /// <summary>
+    /// c’·‚³æZ
+    /// </summary>
+    /// <param name="value"></param>
+    public void MultiplierVertical(float value)
+    {
+        verticalLength *= value;
+    }
+
+    /// <summary>
     /// “_–Å
     /// </summary>
     /// <param name="time">‘±ŠÔ</param>

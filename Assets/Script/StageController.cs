@@ -32,12 +32,14 @@ public class StageController : MonoBehaviour
     // ステージ状態制御
     public readonly StateMachine<StageController, STAGE_STATE> stateMachine = new StateMachine<StageController, STAGE_STATE>();
 
+    // スキル制御
     private SkillManager skillManager;
 
     // 入力可能フラグ
     private bool isInput = true;
 
-
+    // ステージ選択制御
+    private SelectController selectController;
 
     /// -----------------------------------------------
     /// Leftパネル
@@ -147,6 +149,11 @@ public class StageController : MonoBehaviour
     [SerializeField]
     private UISquareFrame cellSelectFrame;
 
+    // 製作物マス選択枠(予備)
+    [SerializeField]
+    private UISquareFrame cellSelectFrameOther;
+
+
     //// ===== 進捗ゲージ =====
     // 進捗ゲージオブジェクトのプレハブ
     [SerializeField]
@@ -191,7 +198,10 @@ public class StageController : MonoBehaviour
 
         footerProperty = footerPropertyAsset.footerProperty;
 
+        cellSelectFrameOther.gameObject.SetActive(false);
+
         skillManager = GetComponent<SkillManager>();
+        selectController = GetComponent<SelectController>();
     }
 
     /// <summary>
@@ -200,21 +210,6 @@ public class StageController : MonoBehaviour
     /// <returns>ステージ終了でtrue</returns>
     public bool Execute()
     {
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            if (Input.GetKey(KeyCode.LeftShift))
-            {
-                StartCoroutine(ChangeGuageValue(0,10));
-                //StartCoroutine(ExecChangeHeatLevel(-100));
-            }
-            else
-            {
-                StartCoroutine(ChangeGuageValue(0, -5));
-                //StartCoroutine(ExecChangeHeatLevel(100));
-            }
-        }
-
-
         if (stateMachine.IsCurrentState(STAGE_STATE.STAGE_END))
         {
             return true;
@@ -224,15 +219,10 @@ public class StageController : MonoBehaviour
         return false;
     }
 
-    private IEnumerator test()
-    {
-        for(int i = 0;i < 3;i++)
-        {
-            Debug.Log("count :" + i);
-            yield return new WaitForSeconds(1);
-        }
-    }
-
+    /// <summary>
+    /// 状態遷移
+    /// </summary>
+    /// <param name="state"></param>
     public void TransState(STAGE_STATE state)
     {
         stateMachine.ChangeState(state);
@@ -267,6 +257,7 @@ public class StageController : MonoBehaviour
 
         // 選択枠非表示
         cellSelectFrame.gameObject.SetActive(false);
+        cellSelectFrameOther.gameObject.SetActive(false);
 
         resultView.Reset();
 
@@ -569,6 +560,38 @@ public class StageController : MonoBehaviour
     }
 
     /// <summary>
+    /// 製作(複数マス選択)
+    /// </summary>
+    /// <param name="cellIndex">対象マス</param>
+    /// <param name="skillProperty">使用スキル</param>
+    /// <param name="onComplete">終了時処理</param>
+    private void Craft(int[] cellIndicies, SkillProperty skillProperty, Action onComplete = null)
+    {
+        // 製作可能か確認
+        if (skillProperty.NeedHeatLevel > currentStageProperty.HeatLevel)
+        {
+            footer.SetFooterText(footerProperty.NoHeatLevel);
+            onComplete?.Invoke();
+            return;
+        }
+
+        // 体力消費
+        if (skillProperty.NeedHp > currentStageProperty.Hp)
+        {
+            footer.SetFooterText(footerProperty.NoHp);
+            onComplete?.Invoke();
+            return;
+        }
+        ChangeHp(skillProperty.NeedHp);
+
+        // 温度消費
+        StartCoroutine(ExecChangeHeatLevel(-skillProperty.NeedHeatLevel));
+
+        // 進捗値更新
+        StartCoroutine(ExecMultiCraft(cellIndicies, skillProperty, onComplete));
+    }
+
+    /// <summary>
     /// 温度変更
     /// </summary>
     /// <param name="skillProperty">使用スキル</param>
@@ -596,6 +619,16 @@ public class StageController : MonoBehaviour
             footer.SetFooterText(footerProperty.NoHp);
             onComplete?.Invoke();
             return;
+        }
+
+        // 音再生
+        if(skillProperty.Type == SkillProperty.SKILL_TYPE.HEAT_UP)
+        {
+            AudioManager.Instance.PlaySE(Define.SE.HEATUP01);
+        }
+        else if(skillProperty.Type == SkillProperty.SKILL_TYPE.COOL_DOWN)
+        {
+            AudioManager.Instance.PlaySE(Define.SE.COOLDOWN01);
         }
 
         ChangeHp(skillProperty.NeedHp);
@@ -660,6 +693,30 @@ public class StageController : MonoBehaviour
     }
 
     /// <summary>
+    /// 製作処理
+    /// </summary>
+    /// <param name="cellIndex"></param>
+    /// <param name="property"></param>
+    /// <returns></returns>
+    private IEnumerator ExecMultiCraft(int[] cellIndicies, SkillProperty property, Action onComplete = null)
+    {
+        isInput = false;
+        for (int i = 0; i < property.Count; ++i)
+        {
+            for (int j = 0;j < cellIndicies.Length;++j)
+            {
+                int craftValue = CalcCraftValue(property.ValueWithWeight);
+                CreateHitEffect(cellIndicies[j], craftValue);
+                StartCoroutine(ChangeGuageValue(cellIndicies[j], craftValue));
+            }
+
+            yield return new WaitForSeconds(changeTimeGuageValue + 0.1f);
+        }
+        onComplete?.Invoke();
+        isInput = true;
+    }
+
+    /// <summary>
     /// 進捗値計算
     /// </summary>
     /// <param name="value"></param>
@@ -684,6 +741,7 @@ public class StageController : MonoBehaviour
         GameObject obj = Instantiate(hitEffectPefab, pos, Quaternion.identity, canvas.transform);
         obj.GetComponent<HitEffect>().SetValue(value);
         obj.GetComponent<HitEffect>().Fire();
+        AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
     }
 
     /// <summary>
@@ -721,7 +779,7 @@ public class StageController : MonoBehaviour
                 // 色変え
                 switch (guage.GetGuageStatus(property))
                 {
-                    case CraftGuage.GUAGE_STATUS.IDEAL: guage.SetSliderColor(Define.craftGuageIdealColor); guage.LightOnIdealPoint(); break;
+                    case CraftGuage.GUAGE_STATUS.IDEAL: AudioManager.Instance.PlaySE(Define.SE.ACCENT01); guage.SetSliderColor(Define.craftGuageIdealColor); guage.LightOnIdealPoint(); break;
                     case CraftGuage.GUAGE_STATUS.SUCCESS: guage.SetSliderColor(Define.craftGuageSuccessColor); guage.LightOffIdealPoint(); break;
                     case CraftGuage.GUAGE_STATUS.NORMAL: guage.SetSliderColor(Define.craftGuageNormalColor); guage.LightOffIdealPoint(); break;
                 }
@@ -750,7 +808,6 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
-            Debug.Log("待機");
             owner.isInput = true;
             owner.UpdateDiscStrAndNeedHpStr(owner.commandProperties[owner.currentCommandIndex]);
         }
@@ -760,17 +817,20 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            if (Input.GetKeyDown(KeyCode.UpArrow))
+            if (Define.InputUpButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CommandFocusUp();
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            else if (Define.InputDownButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CommandFocusDown();
             }
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Define.InputEnterButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.DECISION_SOUND01);
                 switch (owner.commandProperties[owner.currentCommandIndex].Type)
                 {
                     case CommandProperty.COMMAND_TYPE.HIT: owner.TransState(STAGE_STATE.HIT); break;
@@ -778,11 +838,6 @@ public class StageController : MonoBehaviour
                     case CommandProperty.COMMAND_TYPE.CHECK: owner.TransState(STAGE_STATE.CHECK); break;
                     case CommandProperty.COMMAND_TYPE.FINISH: owner.TransState(STAGE_STATE.FINISH); break;
                 }
-            }
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                owner.TransState(STAGE_STATE.STAGE_END);
             }
         }
 
@@ -833,7 +888,6 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
-            Debug.Log("たたく");
             currentFocusCellIndex = 0;
             owner.cellSelectFrame.gameObject.SetActive(true);
             owner.cellSelectFrame.transform.position = owner.craftCells[currentFocusCellIndex].cell.transform.position;
@@ -844,29 +898,34 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Define.InputEnterButton())
             {
                 // skillmanagerから「たたく」スキル取得
                 owner.Craft(currentFocusCellIndex,owner.skillManager.StandardHit,()=>owner.TransState(STAGE_STATE.IDEL));
             }
-            else if (Input.GetKeyDown(KeyCode.UpArrow))
+            else if (Define.InputUpButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CellFocusUp();
             }
-            else if (Input.GetKeyDown(KeyCode.DownArrow))
+            else if (Define.InputDownButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CellFocusDown();
             }
-            else if (Input.GetKeyDown(KeyCode.RightArrow))
+            else if (Define.InputRightButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CellFocusRight();
             }
-            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+            else if (Define.InputLeftButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 CellFocusLeft();
             }
             else if(Define.InputBackButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.CANCEL_SOUND01);
                 owner.TransState(STAGE_STATE.IDEL);
             }
         }
@@ -943,7 +1002,8 @@ public class StageController : MonoBehaviour
         enum SKILL_STATE
         {
             COMMAND,    // 特技選択
-            CELL        // マス選択
+            CELL,       // マス選択
+            MULTI,      // 複数マス選択
         }
 
 
@@ -953,6 +1013,7 @@ public class StageController : MonoBehaviour
         {
             stateMachine.AddState(SKILL_STATE.COMMAND, new CommandState(this));
             stateMachine.AddState(SKILL_STATE.CELL, new CellState(this));
+            stateMachine.AddState(SKILL_STATE.MULTI, new MultiCellState(this));
         }
 
         /// <summary>
@@ -960,7 +1021,6 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
-            Debug.Log("とくぎ");
             owner.currentSkillIndex = 0;
             owner.skillCommandParent.SetActive(true);
             owner.skillSelectFrame.gameObject.SetActive(true);
@@ -986,6 +1046,7 @@ public class StageController : MonoBehaviour
             owner.skillCommandParent.SetActive(false);
             owner.skillSelectFrame.gameObject.SetActive(false);
             owner.cellSelectFrame.gameObject.SetActive(false);
+            owner.cellSelectFrameOther.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -1002,7 +1063,6 @@ public class StageController : MonoBehaviour
 
             public override void Enter()
             {
-                Debug.Log("スキルコマンド選択");
                 MonoBehaviourExtention.Delay(stageController, 1,()=> stageController.skillSelectFrame.transform.position = stageController.skillSelectObjects[stageController.currentSkillIndex].transform.position);
             }
 
@@ -1013,21 +1073,25 @@ public class StageController : MonoBehaviour
                     return;
                 }
 
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (Define.InputEnterButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.DECISION_SOUND01);
                     var skill = stageController.skillManager.GetProperty(stageController.currentSkillIndex);
                     ExecSkill(skill.Etype);
                 }
-                else if (Input.GetKeyDown(KeyCode.UpArrow))
+                else if (Define.InputUpButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CommandFocusUp();
                 }
-                else if (Input.GetKeyDown(KeyCode.DownArrow))
+                else if (Define.InputDownButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CommandFocusDown();
                 }
                 else if (Define.InputBackButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.CANCEL_SOUND01);
                     stageController.TransState(STAGE_STATE.IDEL);
                 }
             }
@@ -1051,6 +1115,10 @@ public class StageController : MonoBehaviour
                         // マス選択せずにスキル実行
                         // skillmanagerからスキル取得
                         stageController.Craft(stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
+                        break;
+                    case SkillProperty.SKILL_EXEC_TYPE.MULTI:
+                        // 複数マス選択に移動
+                        owner.stateMachine.ChangeState(SKILL_STATE.MULTI);
                         break;
                     case SkillProperty.SKILL_EXEC_TYPE.HEAT_LEVEL:
                         stageController.HeatAdjust(stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
@@ -1099,7 +1167,6 @@ public class StageController : MonoBehaviour
 
             public override void Enter()
             {
-                Debug.Log("マス選択");
                 currentFocusCellIndex = 0;
                 stageController.cellSelectFrame.gameObject.SetActive(true);
                 stageController.cellSelectFrame.transform.position = stageController.craftCells[currentFocusCellIndex].cell.transform.position;
@@ -1112,24 +1179,29 @@ public class StageController : MonoBehaviour
                     // skillmanagerからスキル取得
                     stageController.Craft(currentFocusCellIndex, stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
                 }
-                else if (Input.GetKeyDown(KeyCode.UpArrow))
+                else if (Define.InputUpButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusUp();
                 }
-                else if (Input.GetKeyDown(KeyCode.DownArrow))
+                else if (Define.InputDownButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusDown();
                 }
-                else if (Input.GetKeyDown(KeyCode.RightArrow))
+                else if (Define.InputRightButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusRight();
                 }
-                else if (Input.GetKeyDown(KeyCode.LeftArrow))
+                else if (Define.InputLeftButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusLeft();
                 }
                 if (Define.InputBackButton())
                 {
+                    AudioManager.Instance.PlaySE(Define.SE.CANCEL_SOUND01);
                     owner.stateMachine.ChangeState(SKILL_STATE.COMMAND);
                 }
             }
@@ -1193,6 +1265,113 @@ public class StageController : MonoBehaviour
                 }
             }
         }
+
+        /// <summary>
+        /// 複数マス選択
+        /// </summary>
+        private class MultiCellState : State<SkillState>
+        {
+            private StageController stageController;
+
+            // 選択中のマス
+            private int currentFocusCellIndex = 0;
+
+            private SkillProperty.SKILL_TYPE type;
+
+            public MultiCellState(SkillState owner) : base(owner)
+            {
+                stageController = owner.owner;
+            }
+
+            public override void Enter()
+            {
+                currentFocusCellIndex = 0;
+                stageController.cellSelectFrame.gameObject.SetActive(true);
+                stageController.cellSelectFrameOther.gameObject.SetActive(true);
+                stageController.cellSelectFrame.transform.position = stageController.craftCells[currentFocusCellIndex].cell.transform.position;
+                type = stageController.skillManager.GetProperty(stageController.currentSkillIndex).Type;
+                
+
+                // 範囲によって予備選択枠の位置を変える
+                switch (type)
+                {
+                    case SkillProperty.SKILL_TYPE.WIDE_HIT: stageController.cellSelectFrameOther.transform.position = stageController.craftCells[currentFocusCellIndex+1].cell.transform.position; break;
+                    case SkillProperty.SKILL_TYPE.LONG_HIT: stageController.cellSelectFrameOther.transform.position = stageController.craftCells[currentFocusCellIndex+2].cell.transform.position; break;
+                    default:break;
+                }
+            }
+
+            public override void Execute()
+            {
+                if (Define.InputEnterButton())
+                {
+                    // スキル実行処理
+                    // skillmanagerからスキル取得
+                    int[] cellIndicies = { currentFocusCellIndex, currentFocusCellIndex+1 };
+                    stageController.Craft(cellIndicies, stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
+                }
+                else if (Define.InputUpButton())
+                {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
+                    CellFocusUp();
+                }
+                else if (Define.InputDownButton())
+                {
+                    AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
+                    CellFocusDown();
+                }
+                if (Define.InputBackButton())
+                {
+                    AudioManager.Instance.PlaySE(Define.SE.CANCEL_SOUND01);
+                    owner.stateMachine.ChangeState(SKILL_STATE.COMMAND);
+                }
+            }
+            public override void Exit()
+            {
+                stageController.cellSelectFrameOther.gameObject.SetActive(false);
+                stageController.cellSelectFrame.gameObject.SetActive(false);
+            }
+
+            private void OtherCellFocus(int cellIndex)
+            {
+                var frame = stageController.cellSelectFrameOther;
+
+                switch (type)
+                {
+                    case SkillProperty.SKILL_TYPE.WIDE_HIT: frame.transform.position = stageController.craftCells[cellIndex + 1].cell.transform.position; break;
+                    case SkillProperty.SKILL_TYPE.LONG_HIT: frame.transform.position = stageController.craftCells[cellIndex + 2].cell.transform.position; break;
+                    default: break;
+                }
+            }
+
+            /// <summary>
+            /// 選択セルを上に移動
+            /// </summary>
+            private void CellFocusUp()
+            {
+                int index = currentFocusCellIndex - 2;
+                if (index.IsRange(0, stageController.currentStageProperty.TotalCellCount - 1))
+                {
+                    currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex - 2, 0, stageController.currentStageProperty.TotalCellCount - 1);
+                    stageController.cellSelectFrame.transform.position = stageController.craftCells[currentFocusCellIndex].cell.transform.position;
+                    OtherCellFocus(currentFocusCellIndex);
+                }
+            }
+
+            /// <summary>
+            /// 選択セルを下に移動
+            /// </summary>
+            private void CellFocusDown()
+            {
+                int index = currentFocusCellIndex + 2;
+                if (index.IsRange(0, stageController.currentStageProperty.TotalCellCount - 1))
+                {
+                    currentFocusCellIndex = Mathf.Clamp(currentFocusCellIndex + 2, 0, stageController.currentStageProperty.TotalCellCount - 1);
+                    stageController.cellSelectFrame.transform.position = stageController.craftCells[currentFocusCellIndex].cell.transform.position;
+                    OtherCellFocus(currentFocusCellIndex);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -1222,6 +1401,7 @@ public class StageController : MonoBehaviour
         {
             if (Define.InputEnterButton() || Define.InputBackButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.DECISION_SOUND01);
                 owner.TransState(STAGE_STATE.IDEL);
             }
         }
@@ -1335,22 +1515,15 @@ public class StageController : MonoBehaviour
         /// 状態開始時
         /// </summary>
         public override void Enter()
-        {
-            Debug.Log("しあげる");
-            
+        {            
             int detailValue = CalcDetailValue();
 
-            int revue = 0;
-            switch (CheckDetail(detailValue))
-            {
-                case DETAIL_STATUS.BAD: revue = 0;  break;
-                case DETAIL_STATUS.NORMAL: revue = 1; break;
-                case DETAIL_STATUS.GOOD: revue = 2; break;
-                case DETAIL_STATUS.GREAT: revue = 3; break;
-            }
+            int revue = GetRevue(detailValue);
 
             Sprite sprite = owner.currentStageProperty.ResultSprite;
-            owner.resultView.DisplayResult(sprite, revue);
+            owner.resultView.DisplayResult(sprite, revue,()=>PlayResultSE(CheckDetail(detailValue)));
+
+            AudioManager.Instance.PlaySE(Define.SE.COOLDOWN01);
         }
 
         /// <summary>
@@ -1365,6 +1538,13 @@ public class StageController : MonoBehaviour
 
             if(Define.InputEnterButton())
             {
+                AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
+
+                // 選択画面の評価に反映
+                int detailValue = CalcDetailValue();
+                int revue = GetRevue(detailValue);
+                int stageIndex = owner.currentStageProperty.StageIndex;
+                owner.selectController.GetRevueView(stageIndex - 1).LightOnStar(revue);
                 MaskFadeController.Instance.FadeOut(1.0f, () => MonoBehaviourExtention.Delay(owner, 0.5f, () => { owner.TransState(STAGE_STATE.STAGE_END); } ));
             }
         }
@@ -1374,6 +1554,39 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Exit()
         {
+        }
+
+        /// <summary>
+        /// 結果によって再生するSEを変える
+        /// </summary>
+        private void PlayResultSE(DETAIL_STATUS status)
+        {
+            switch (status)
+            {
+                case DETAIL_STATUS.BAD: AudioManager.Instance.PlaySE(Define.SE.RESULT01); break;
+                case DETAIL_STATUS.NORMAL: AudioManager.Instance.PlaySE(Define.SE.RESULT01); break;
+                case DETAIL_STATUS.GOOD: AudioManager.Instance.PlaySE(Define.SE.RESULT02); break;
+                case DETAIL_STATUS.GREAT: AudioManager.Instance.PlaySE(Define.SE.RESULT03); break;
+            }
+        }
+
+        /// <summary>
+        /// 評価値をもとに★の数を返す
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private int GetRevue(int value)
+        {
+            int revue = 0;
+            switch (CheckDetail(value))
+            {
+                case DETAIL_STATUS.BAD: revue = 0; break;
+                case DETAIL_STATUS.NORMAL: revue = 1; break;
+                case DETAIL_STATUS.GOOD: revue = 2; break;
+                case DETAIL_STATUS.GREAT: revue = 3; break;
+            }
+
+            return revue;
         }
 
         /// <summary>
@@ -1441,7 +1654,6 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
-            Debug.Log("終わり");
             owner.resultView.Reset();
         }
 

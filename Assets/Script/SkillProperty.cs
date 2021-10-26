@@ -14,7 +14,9 @@ public class SkillProperty
         SMALL_HIT,      // 弱く叩く
         RANDOM_HIT,     // ランダムに数回叩く
         HEAT_UP,        // 温度上昇
-        COOL_DOWN       // 温度下降
+        COOL_DOWN,      // 温度下降
+        WIDE_HIT,       // 左右打ち
+        LONG_HIT        // 上下打ち
     }
 
     // スキル実行種類
@@ -22,6 +24,7 @@ public class SkillProperty
     {
         NORMAL,     // 指定のマスを選択してたたく系
         RANDOM,     // ランダムなマスを選択してたたく系
+        MULTI,      // 複数範囲を選択してたたく系
         HEAT_LEVEL  // 温度変更
     }
 
@@ -83,14 +86,7 @@ public class SkillProperty
     [SerializeField]
     private int count = 1;
     public int Count { get { return count; } }
-
-    // セル選択に移るか（trueで移る）
-    // （ランダム打ちなどは選択する必要がないため）
-    [SerializeField]
-    private bool isCellSelected = true;
-    public bool IsCellSelected { get { return isCellSelected; } }
-
-
+    
     public SkillProperty Clone()
     {
         return (SkillProperty)MemberwiseClone();

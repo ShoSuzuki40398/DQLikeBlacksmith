@@ -10,6 +10,7 @@ public class SelectController : MonoBehaviour
     // ステージアイコン
     [SerializeField]
     private List<GameObject> selectIcons;
+    public RevueView GetRevueView(int index) { return selectIcons[index].GetComponentInChildren<RevueView>(); }
 
     // ステージ初期情報
     [SerializeField]
