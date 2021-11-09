@@ -44,7 +44,7 @@ public class CraftGuage : MonoBehaviour
 
     // スライダー値
     public float SliderValue { get { return slider.value; } set { slider.value = value; } }
-
+    
     public void SetSliderMaxValue(float value)
     {
         slider.maxValue = value;

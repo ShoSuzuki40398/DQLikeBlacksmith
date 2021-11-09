@@ -26,6 +26,26 @@ public class SkillManager : MonoBehaviour
         }
     }
 
+    // 「たたく」「上下打ち」を除いて全て取得
+    public List<SkillProperty> SkillPropertiesWithoutLongHit
+    {
+        get
+        {
+            List<SkillProperty> res = new List<SkillProperty>();
+
+            foreach (var asset in skillPropertyAssets)
+            {
+                if(asset.skillProperty.Type == SkillProperty.SKILL_TYPE.LONG_HIT || asset.skillProperty.Type == SkillProperty.SKILL_TYPE.STANDARD_HIT)
+                {
+                    continue;
+                }
+                res.Add(asset.skillProperty);
+            }
+
+            return res;
+        }
+    }
+
     // 「たたく」情報を取得
     public SkillProperty StandardHit { get { return skillPropertyAssets[0].skillProperty; } }
 

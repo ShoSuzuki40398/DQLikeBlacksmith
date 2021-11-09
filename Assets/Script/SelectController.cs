@@ -11,6 +11,7 @@ public class SelectController : MonoBehaviour
     [SerializeField]
     private List<GameObject> selectIcons;
     public RevueView GetRevueView(int index) { return selectIcons[index].GetComponentInChildren<RevueView>(); }
+    public StageIcon GetStageIcon(int index) { return selectIcons[index].GetComponent<StageIcon>(); }
 
     // ステージ初期情報
     [SerializeField]
@@ -60,5 +61,13 @@ public class SelectController : MonoBehaviour
     public StagePropertyAsset GetStageProperty(int index)
     {
         return stagePropertyAssets[index];
+    }
+
+    /// <summary>
+    /// ステージアイコンのマスクを外す
+    /// </summary>
+    public void DisableMask(int index)
+    {
+        GetStageIcon(index).SetEnableMask(false);
     }
 }
