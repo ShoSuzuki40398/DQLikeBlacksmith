@@ -5192,7 +5192,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mask: {fileID: 8371985366623577104}
   outScale: {x: 35, y: 35, z: 35}
-  duration: 0.1
+  duration: 0.3
   startState: 2
 --- !u!4 &1260289510
 Transform:
@@ -8870,4 +8870,4 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
