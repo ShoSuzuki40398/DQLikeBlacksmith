@@ -313,7 +313,7 @@ public class StageController : MonoBehaviour
     public void CreateSkillCommand()
     {
         // 剣の時は「上下打ち」抜きのスキル一覧を取得
-        if(currentStageProperty.StageIndex == 1)
+        if (currentStageProperty.StageIndex == 1)
         {
             foreach (var property in skillManager.SkillPropertiesWithoutLongHit)
             {
@@ -1066,6 +1066,7 @@ public class StageController : MonoBehaviour
             owner.skillSelectFrame.gameObject.SetActive(false);
             owner.cellSelectFrame.gameObject.SetActive(false);
             owner.cellSelectFrameOther.gameObject.SetActive(false);
+            owner.footer.ClearFooterText();
         }
 
         /// <summary>
@@ -1095,8 +1096,18 @@ public class StageController : MonoBehaviour
                 if (Define.InputEnterButton())
                 {
                     AudioManager.Instance.PlaySE(Define.SE.DECISION_SOUND01);
-                    var skill = stageController.skillManager.GetProperty(stageController.currentSkillIndex);
-                    ExecSkill(skill.Etype);
+                    // ステージ1の場合
+                    if (stageController.currentStageProperty.StageIndex == 1)
+                    {
+                        var skill = stageController.skillManager.GetPropertyWithoutLongHit(stageController.currentSkillIndex);
+                        ExecSkill(skill);
+                    }
+                    else
+                    {
+                        var skill = stageController.skillManager.GetProperty(stageController.currentSkillIndex);
+                        ExecSkill(skill);
+                    }
+                        
                 }
                 else if (Define.InputUpButton())
                 {
@@ -1122,9 +1133,9 @@ public class StageController : MonoBehaviour
             /// スキル実行
             /// </summary>
             /// <param name="type"></param>
-            private void ExecSkill(SkillProperty.SKILL_EXEC_TYPE type)
+            private void ExecSkill(SkillProperty skill)
             {
-                switch (type)
+                switch (skill.Etype)
                 {
                     case SkillProperty.SKILL_EXEC_TYPE.NORMAL:
                         // マス選択に移動
@@ -1133,14 +1144,14 @@ public class StageController : MonoBehaviour
                     case SkillProperty.SKILL_EXEC_TYPE.RANDOM:
                         // マス選択せずにスキル実行
                         // skillmanagerからスキル取得
-                        stageController.Craft(stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
+                        stageController.Craft(skill, () => stageController.TransState(STAGE_STATE.IDEL));
                         break;
                     case SkillProperty.SKILL_EXEC_TYPE.MULTI:
                         // 複数マス選択に移動
                         owner.stateMachine.ChangeState(SKILL_STATE.MULTI);
                         break;
                     case SkillProperty.SKILL_EXEC_TYPE.HEAT_LEVEL:
-                        stageController.HeatAdjust(stageController.skillManager.GetProperty(stageController.currentSkillIndex), () => stageController.TransState(STAGE_STATE.IDEL));
+                        stageController.HeatAdjust(skill, () => stageController.TransState(STAGE_STATE.IDEL));
                         break;
                 }
             }
@@ -1150,10 +1161,20 @@ public class StageController : MonoBehaviour
             /// </summary>
             public void CommandFocusUp()
             {
-                stageController.currentSkillIndex = Mathf.Clamp(stageController.currentSkillIndex - 1, 0, stageController.skillManager.SkillCount - 1);
+                stageController.currentSkillIndex = Mathf.Clamp(stageController.currentSkillIndex - 1, 0, stageController.skillSelectObjects.Count - 1);
                 stageController.skillSelectFrame.transform.position = stageController.skillSelectObjects[stageController.currentSkillIndex].transform.position;
-                stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscription(stageController.currentSkillIndex));
-                stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetProperty(stageController.currentSkillIndex));
+
+                // ステージ1の場合
+                if (stageController.currentStageProperty.StageIndex == 1)
+                {
+                    stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscriptionWithoutLongHit(stageController.currentSkillIndex));
+                    stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetPropertyWithoutLongHit(stageController.currentSkillIndex));
+                }
+                else
+                {
+                    stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscription(stageController.currentSkillIndex));
+                    stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetProperty(stageController.currentSkillIndex));
+                }
             }
 
             /// <summary>
@@ -1161,10 +1182,20 @@ public class StageController : MonoBehaviour
             /// </summary>
             public void CommandFocusDown()
             {
-                stageController.currentSkillIndex = Mathf.Clamp(stageController.currentSkillIndex + 1, 0, stageController.skillManager.SkillCount - 1);
+                stageController.currentSkillIndex = Mathf.Clamp(stageController.currentSkillIndex + 1, 0, stageController.skillSelectObjects.Count - 1);
                 stageController.skillSelectFrame.transform.position = stageController.skillSelectObjects[stageController.currentSkillIndex].transform.position;
-                stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscription(stageController.currentSkillIndex));
-                stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetProperty(stageController.currentSkillIndex));
+
+                // ステージ1の場合
+                if (stageController.currentStageProperty.StageIndex == 1)
+                {
+                    stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscriptionWithoutLongHit(stageController.currentSkillIndex));
+                    stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetPropertyWithoutLongHit(stageController.currentSkillIndex));
+                }
+                else
+                {
+                    stageController.footer.SetFooterText(stageController.skillManager.GetSkillDiscription(stageController.currentSkillIndex));
+                    stageController.UpdateDiscStrAndNeedHpStr(stageController.skillManager.GetProperty(stageController.currentSkillIndex));
+                }
             }
 
         }
@@ -1341,12 +1372,12 @@ public class StageController : MonoBehaviour
                     AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusDown();
                 }
-                else if(Define.InputLeftButton() && type == SkillProperty.SKILL_TYPE.LONG_HIT)
+                else if (Define.InputLeftButton() && type == SkillProperty.SKILL_TYPE.LONG_HIT)
                 {
                     AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusLeft();
                 }
-                else if(Define.InputRightButton() && type == SkillProperty.SKILL_TYPE.LONG_HIT)
+                else if (Define.InputRightButton() && type == SkillProperty.SKILL_TYPE.LONG_HIT)
                 {
                     AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                     CellFocusRight();
@@ -1369,7 +1400,7 @@ public class StageController : MonoBehaviour
             /// <param name="cellIndex"></param>
             private void OtherCellFocus(int cellIndex)
             {
-                if(!cellIndex.IsRange(0,stageController.craftCells.Count-1))
+                if (!cellIndex.IsRange(0, stageController.craftCells.Count - 1))
                 {
                     return;
                 }
@@ -1465,8 +1496,6 @@ public class StageController : MonoBehaviour
         /// </summary>
         public override void Enter()
         {
-            Debug.Log("くわしく見る");
-
             int detailValue = CalcDetailValue();
             ShowDetail(detailValue);
         }

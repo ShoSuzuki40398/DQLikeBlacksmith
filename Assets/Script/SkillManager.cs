@@ -68,6 +68,21 @@ public class SkillManager : MonoBehaviour
     }
 
     /// <summary>
+    /// スキル情報取得(「上下打ちなし」)
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public SkillProperty GetPropertyWithoutLongHit(int index)
+    {
+        if (index > SkillPropertiesWithoutLongHit.Count)
+        {
+            return null;
+        }
+
+        return SkillPropertiesWithoutLongHit[index];
+    }
+
+    /// <summary>
     /// スキル名をすべて取得
     /// </summary>
     /// <returns></returns>
@@ -123,5 +138,18 @@ public class SkillManager : MonoBehaviour
             return "";
         }
         return SkillProperties[index].SkillDiscriptionStr;
+    }
+
+    /// <summary>
+    /// スキル説明を取得(「上下打ちなし」)
+    /// </summary>
+    /// <returns></returns>
+    public string GetSkillDiscriptionWithoutLongHit(int index)
+    {
+        if (index > SkillPropertiesWithoutLongHit.Count)
+        {
+            return "";
+        }
+        return SkillPropertiesWithoutLongHit[index].SkillDiscriptionStr;
     }
 }
