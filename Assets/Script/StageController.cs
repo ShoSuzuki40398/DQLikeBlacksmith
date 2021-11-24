@@ -391,14 +391,14 @@ public class StageController : MonoBehaviour
                 float x = 0;
                 if ((itr.index + 1) % 2 != 0)
                 {   // マスの左側
-                    x -= guage.GetComponent<RectTransform>().sizeDelta.x;
+                    x -= guage.GetComponent<RectTransform>().sizeDelta.x + 50.0f;
                     guage.SetDirection(Slider.Direction.RightToLeft);
                     guage.SetIdealPointAnchorRight();
                     guage.SetIdealPointX(-property.IdealValue);
                 }
                 else
                 {   // マスの右側
-                    x += guage.GetComponent<RectTransform>().sizeDelta.x;
+                    x += guage.GetComponent<RectTransform>().sizeDelta.x + 50.0f;
                     guage.SetDirection(Slider.Direction.LeftToRight);
                     guage.SetIdealPointAnchorLeft();
                     guage.SetIdealPointX(property.IdealValue);

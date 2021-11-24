@@ -12,8 +12,11 @@ public static class Define
         UnityEditor.EditorApplication.isPlaying = false;
 #elif UNITY_WEBPLAYER
 		UnityEngine.Application.OpenURL("https://unityroom.com/");
+#elif UNITY_WEBGL
+		UnityEngine.Application.OpenURL("https://unityroom.com/");
+        UnityEngine.Application.Quit();
 #else
-		UnityEngine.Application.Quit();
+		//UnityEngine.Application.Quit();
 #endif
     }
 

@@ -103,7 +103,7 @@ public class SceneController : MonoBehaviour
                 return;
             }
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Define.InputEnterButton())
             {
                 AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
                 switch (owner.titleController.GetSelectIndex())
@@ -172,19 +172,19 @@ public class SceneController : MonoBehaviour
         /// </summary>
         public override void Execute()
         {
-            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            if (Define.InputLeftButton())
             {
                 AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex - 1, 0, owner.stageNum - 1);
                 owner.selectController.FocusFrame(owner.currentSelectIndex);
             }
-            else if (Input.GetKeyDown(KeyCode.RightArrow))
+            else if (Define.InputRightButton())
             {
                 AudioManager.Instance.PlaySE(Define.SE.SELECT_SOUND01);
                 owner.currentSelectIndex = Mathf.Clamp(owner.currentSelectIndex + 1, 0, owner.stageNum - 1);
                 owner.selectController.FocusFrame(owner.currentSelectIndex);
             }
-            else if (Input.GetKeyDown(KeyCode.Space))
+            else if (Define.InputEnterButton())
             {
                 AudioManager.Instance.PlaySE(Define.SE.HAMMER_HIT01);
                 owner.selectController.FlashingFrame();
